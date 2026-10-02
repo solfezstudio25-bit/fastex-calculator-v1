@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FASTEX Calculator V1</title>
+<style>
+:root{--navy:#061b33;--blue:#087cff;--green:#12a05a;--bg:#f4f7fb;--text:#10233d}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
+.app{max-width:520px;margin:auto;min-height:100vh;background:white}
+.header{background:linear-gradient(145deg,#04172d,#07345c);color:white;padding:26px 20px 22px;border-radius:0 0 24px 24px}
+.brand{font-size:30px;font-weight:800;font-style:italic;letter-spacing:-1px}.brand span{color:#1296ff}
+.sub{opacity:.8;margin-top:4px}
+.content{padding:18px}
+.card{border:1px solid #dce5ef;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 5px 18px #09284d0d}
+label{display:block;font-weight:700;margin-bottom:8px}.field{display:flex;gap:10px;align-items:center;border:1px solid #cbd8e7;border-radius:14px;padding:12px;background:#fff}
+.icon{font-size:21px}.field input{border:0;outline:0;width:100%;font-size:16px}
+button{width:100%;border:0;border-radius:15px;padding:15px;font-size:17px;font-weight:800;cursor:pointer}
+.primary{background:var(--blue);color:white}.secondary{background:#eef5ff;color:#0759a8;margin-top:10px}
+.results{display:none}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{background:#f5f8fc;border-radius:15px;padding:14px;text-align:center}.metric b{display:block;font-size:25px;margin-top:6px}
+.status{font-weight:700;margin:10px 0}.ok{color:var(--green)}.error{color:#c62828}
+.small{font-size:12px;color:#66788d;line-height:1.4}
+.spinner{display:none;text-align:center;padding:10px}.footer{padding:20px;text-align:center;color:#7a8999;font-size:12px}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="header">
+  <div class="brand">FAST<span>EX</span></div>
+  <div class="sub">EXPRESS DELIVERY • CALCULATOR V1</div>
+</header>
+
+<main class="content">
+<section class="card">
+  <h2 style="margin-top:0">Νέα Αποστολή</h2>
+  <label>📦 Σημείο Παραλαβής</label>
+  <div class="field">
+    <div class="icon">🏪</div>
+    <input id="origin" placeholder="π.χ. Θηβών 125, Νίκαια">
+  </div>
+  <br>
+  <label>🏠 Σημείο Παράδοσης</label>
+  <div class="field">
+    <div class="icon">📍</div>
+    <input id="destination" placeholder="π.χ. Κορίνθου 28, Κερατσίνι">
+  </div>
+  <div class="spinner" id="spinner">⏳ Υπολογίζω πραγματική διαδρομή...</div>
+  <button class="primary" id="calc">Υπολογισμός διαδρομής</button>
+  <div id="status" class="status"></div>
+</section>
+
+<section class="card results" id="results">
+  <h2 style="margin-top:0">Αποτέλεσμα</h2>
+  <div class="grid">
+    <div class="metric">📏 Απόσταση<b id="distance">—</b></div>
+    <div class="metric">⏱️ Χρόνος<b id="duration">—</b></div>
+  </div>
+  <p class="small">Η διαδρομή υπολογίζεται ως μηχανοκίνητο δίκυκλο (TWO_WHEELER). Ο χρόνος είναι εκτίμηση διαδρομής και μπορεί να μεταβληθεί από την κίνηση.</p>
+  <button class="secondary" id="continue">Συνέχεια →</button>
+</section>
+</main>
+
+<div class="footer">FASTEX • Γρήγορα • Ασφαλή • Αξιόπιστα</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+$("calc").addEventListener("click", async () => {
+  const origin = $("origin").value.trim();
+  const destination = $("destination").value.trim();
+  if (!origin || !destination) {
+    $("status").textContent = "Συμπλήρωσε και τα δύο σημεία.";
+    $("status").className = "status error";
+    return;
+  }
+  $("spinner").style.display = "block";
+  $("status").textContent = "";
+  $("results").style.display = "none";
+  $("calc").disabled = true;
+
+  try {
+    const r = await fetch("/api/route", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({origin,destination})
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || "Αποτυχία υπολογισμού.");
+
+    $("distance").textContent = data.distanceKm.toFixed(1) + " km";
+    $("duration").textContent = data.durationMinutes + " λεπτά";
+    $("results").style.display = "block";
+    $("status").textContent = "✓ Η διαδρομή υπολογίστηκε";
+    $("status").className = "status ok";
+
+    sessionStorage.setItem("fastexRoute", JSON.stringify({
+      origin, destination,
+      distanceKm:data.distanceKm,
+      durationMinutes:data.durationMinutes
+    }));
+  } catch(e) {
+    $("status").textContent = e.message;
+    $("status").className = "status error";
+  } finally {
+    $("spinner").style.display = "none";
+    $("calc").disabled = false;
+  }
+});
+
+$("continue").addEventListener("click", () => {
+  const route = sessionStorage.getItem("fastexRoute");
+  alert(route ? "Τα στοιχεία της αποστολής αποθηκεύτηκαν προσωρινά. Επόμενο βήμα: κόστος + αριθμός αποστολής + Proofly." : "Κάνε πρώτα υπολογισμό.");
+});
+</script>
+</body>
+</html>
