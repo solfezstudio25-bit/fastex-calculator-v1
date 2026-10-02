@@ -1,116 +1,106 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="el">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FASTEX Calculator V1</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>FASTEX V2</title>
 <style>
-:root{--navy:#061b33;--blue:#087cff;--green:#12a05a;--bg:#f4f7fb;--text:#10233d}
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
-.app{max-width:520px;margin:auto;min-height:100vh;background:white}
-.header{background:linear-gradient(145deg,#04172d,#07345c);color:white;padding:26px 20px 22px;border-radius:0 0 24px 24px}
-.brand{font-size:30px;font-weight:800;font-style:italic;letter-spacing:-1px}.brand span{color:#1296ff}
-.sub{opacity:.8;margin-top:4px}
-.content{padding:18px}
-.card{border:1px solid #dce5ef;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 5px 18px #09284d0d}
-label{display:block;font-weight:700;margin-bottom:8px}.field{display:flex;gap:10px;align-items:center;border:1px solid #cbd8e7;border-radius:14px;padding:12px;background:#fff}
-.icon{font-size:21px}.field input{border:0;outline:0;width:100%;font-size:16px}
-button{width:100%;border:0;border-radius:15px;padding:15px;font-size:17px;font-weight:800;cursor:pointer}
-.primary{background:var(--blue);color:white}.secondary{background:#eef5ff;color:#0759a8;margin-top:10px}
-.results{display:none}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{background:#f5f8fc;border-radius:15px;padding:14px;text-align:center}.metric b{display:block;font-size:25px;margin-top:6px}
-.status{font-weight:700;margin:10px 0}.ok{color:var(--green)}.error{color:#c62828}
-.small{font-size:12px;color:#66788d;line-height:1.4}
-.spinner{display:none;text-align:center;padding:10px}.footer{padding:20px;text-align:center;color:#7a8999;font-size:12px}
+:root{--bg:#f3f4f6;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--dark:#111827;--blue:#2563eb;--green:#16a34a;--orange:#ea580c;--red:#dc2626}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:var(--dark);color:white;padding:18px 16px;position:sticky;top:0;z-index:5}.brand{font-size:25px;font-weight:800}.sub{font-size:12px;opacity:.7}
+main{max-width:760px;margin:auto;padding:16px 14px 90px}.screen{display:none}.screen.active{display:block}
+h2{font-size:22px;margin:5px 0 14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card,.action{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 2px 8px #00000008}.card{padding:15px;margin-bottom:12px}
+.action{border:0;padding:16px 12px;text-align:left;font:inherit;font-weight:750;cursor:pointer}.action small{display:block;color:var(--muted);font-weight:400;margin-top:5px}.icon{font-size:25px;margin-bottom:7px}
+label{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}input,textarea,select{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;background:#fff;font:inherit}textarea{min-height:75px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border:0;border-radius:10px;padding:12px 14px;font-weight:800;cursor:pointer}.primary{background:var(--blue);color:white}.light{background:#dbeafe;color:#1d4ed8}.danger{background:#fee2e2;color:#991b1b}.back{border:0;background:none;color:var(--blue);font-weight:700;padding:0 0 10px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.actions .btn{flex:1;min-width:105px}
+.muted,.note{color:var(--muted)}.note{font-size:12px;line-height:1.45}.stat{font-size:27px;font-weight:850}.ship{border-left:5px solid var(--blue)}.shiphead{display:flex;justify-content:space-between;gap:8px}.title{font-weight:800}.badge{border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800;background:#f3f4f6;color:#4b5563;white-space:nowrap}.badge.orange{background:#ffedd5;color:#9a3412}.badge.green{background:#dcfce7;color:#166534}
+.nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);z-index:10;padding-bottom:env(safe-area-inset-bottom)}.nav button{border:0;background:none;color:var(--muted);padding:9px 3px;font-size:11px}.nav button strong{display:block;font-size:18px}.nav button.active{color:var(--blue)}
+.empty{text-align:center;padding:25px;color:var(--muted)}hr{border:0;border-top:1px solid var(--line);margin:13px 0}
+@media(max-width:430px){.row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="app">
-<header class="header">
-  <div class="brand">FAST<span>EX</span></div>
-  <div class="sub">EXPRESS DELIVERY • CALCULATOR V1</div>
-</header>
+<header><div class="brand">⚡ FASTEX</div><div class="sub">Express deliveries • V2</div></header>
 
-<main class="content">
-<section class="card">
-  <h2 style="margin-top:0">Νέα Αποστολή</h2>
-  <label>📦 Σημείο Παραλαβής</label>
-  <div class="field">
-    <div class="icon">🏪</div>
-    <input id="origin" placeholder="π.χ. Θηβών 125, Νίκαια">
-  </div>
-  <br>
-  <label>🏠 Σημείο Παράδοσης</label>
-  <div class="field">
-    <div class="icon">📍</div>
-    <input id="destination" placeholder="π.χ. Κορίνθου 28, Κερατσίνι">
-  </div>
-  <div class="spinner" id="spinner">⏳ Υπολογίζω πραγματική διαδρομή...</div>
-  <button class="primary" id="calc">Υπολογισμός διαδρομής</button>
-  <div id="status" class="status"></div>
+<main>
+<section id="home" class="screen active">
+<h2>Πίνακας FASTEX</h2>
+<div class="grid">
+<button class="action" onclick="show('new')"><div class="icon">📦</div>Νέα αποστολή<small>Καταχώρηση δέματος</small></button>
+<button class="action" onclick="show('active')"><div class="icon">🚚</div>Ενεργές<small id="activeCount">0 αποστολές</small></button>
+<button class="action" onclick="show('history')"><div class="icon">📋</div>Ιστορικό<small>Όλες οι παραδόσεις</small></button>
+<button class="action" onclick="show('customers')"><div class="icon">👥</div>Πελάτες<small>Καταστήματα & στοιχεία</small></button>
+</div>
+<div class="card"><div class="muted">Σήμερα</div><div class="row" style="margin-top:8px"><div><div class="stat" id="todayJobs">0</div><div class="muted">αποστολές</div></div><div><div class="stat" id="todayRevenue">0,00€</div><div class="muted">χρεώσεις</div></div></div></div>
+<div class="card"><b>FASTEX V2</b><p class="note">Πλήρης βασική διαχείριση αποστολών, πελατών και ιστορικού. Τα δεδομένα αποθηκεύονται στο κινητό. Η σύνδεση Google Maps/API θα προστεθεί στο επόμενο στάδιο.</p></div>
 </section>
 
-<section class="card results" id="results">
-  <h2 style="margin-top:0">Αποτέλεσμα</h2>
-  <div class="grid">
-    <div class="metric">📏 Απόσταση<b id="distance">—</b></div>
-    <div class="metric">⏱️ Χρόνος<b id="duration">—</b></div>
-  </div>
-  <p class="small">Η διαδρομή υπολογίζεται ως μηχανοκίνητο δίκυκλο (TWO_WHEELER). Ο χρόνος είναι εκτίμηση διαδρομής και μπορεί να μεταβληθεί από την κίνηση.</p>
-  <button class="secondary" id="continue">Συνέχεια →</button>
+<section id="new" class="screen">
+<button class="back" onclick="show('home')">← Πίσω</button><h2>Νέα αποστολή</h2>
+<form id="form" class="card">
+<label>Κατάστημα / αποστολέας</label><input id="store" required placeholder="π.χ. Φαρμακείο Παπαδόπουλος">
+<label>Διεύθυνση παραλαβής</label><input id="pickup" required placeholder="π.χ. Θηβών 100, Αιγάλεω">
+<div class="row"><div><label>Παραλήπτης</label><input id="recipient" required></div><div><label>Τηλέφωνο</label><input id="phone" inputmode="tel"></div></div>
+<label>Διεύθυνση παράδοσης</label><input id="dropoff" required placeholder="π.χ. Πειραιώς 200, Πειραιάς">
+<label>Περιγραφή δέματος</label><textarea id="parcel" placeholder="π.χ. φάκελος, μικρό δέμα"></textarea>
+<div class="row"><div><label>Km (προσωρινά)</label><input id="km" type="number" min="0" step=".1"></div><div><label>Χρέωση €</label><input id="price" type="number" min="0" step=".01"></div></div>
+<div class="actions"><button class="btn light" type="button" onclick="calcPrice()">Υπολογισμός χρέωσης</button><button class="btn primary" type="submit">Αποθήκευση</button></div>
+<p class="note">Στο επόμενο στάδιο τα km θα υπολογίζονται αυτόματα από Google Maps.</p>
+</form>
+</section>
+
+<section id="active" class="screen"><h2>Ενεργές αποστολές</h2><div id="activeList"></div></section>
+<section id="history" class="screen"><h2>Ιστορικό</h2><input id="search" oninput="render()" placeholder="🔎 Αναζήτηση"><div id="historyList"></div></section>
+
+<section id="customers" class="screen">
+<h2>Πελάτες</h2>
+<div class="card">
+<label>Κατάστημα</label><input id="cname" placeholder="π.χ. Pet Shop Χ">
+<div class="row"><div><label>Τηλέφωνο</label><input id="cphone"></div><div><label>Διεύθυνση</label><input id="caddress"></div></div>
+<button class="btn primary" style="width:100%;margin-top:12px" onclick="addCustomer()">Αποθήκευση πελάτη</button>
+</div>
+<div id="customerList"></div>
 </section>
 </main>
 
-<div class="footer">FASTEX • Γρήγορα • Ασφαλή • Αξιόπιστα</div>
-</div>
+<nav class="nav">
+<button id="nav-home" onclick="show('home')"><strong>⌂</strong>Αρχική</button>
+<button id="nav-new" onclick="show('new')"><strong>＋</strong>Νέα</button>
+<button id="nav-active" onclick="show('active')"><strong>🚚</strong>Ενεργές</button>
+<button id="nav-history" onclick="show('history')"><strong>☷</strong>Ιστορικό</button>
+</nav>
 
 <script>
-const $ = id => document.getElementById(id);
-$("calc").addEventListener("click", async () => {
-  const origin = $("origin").value.trim();
-  const destination = $("destination").value.trim();
-  if (!origin || !destination) {
-    $("status").textContent = "Συμπλήρωσε και τα δύο σημεία.";
-    $("status").className = "status error";
-    return;
-  }
-  $("spinner").style.display = "block";
-  $("status").textContent = "";
-  $("results").style.display = "none";
-  $("calc").disabled = true;
-
-  try {
-    const r = await fetch("/api/route", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({origin,destination})
-    });
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error || "Αποτυχία υπολογισμού.");
-
-    $("distance").textContent = data.distanceKm.toFixed(1) + " km";
-    $("duration").textContent = data.durationMinutes + " λεπτά";
-    $("results").style.display = "block";
-    $("status").textContent = "✓ Η διαδρομή υπολογίστηκε";
-    $("status").className = "status ok";
-
-    sessionStorage.setItem("fastexRoute", JSON.stringify({
-      origin, destination,
-      distanceKm:data.distanceKm,
-      durationMinutes:data.durationMinutes
-    }));
-  } catch(e) {
-    $("status").textContent = e.message;
-    $("status").className = "status error";
-  } finally {
-    $("spinner").style.display = "none";
-    $("calc").disabled = false;
-  }
-});
-
-$("continue").addEventListener("click", () => {
-  const route = sessionStorage.getItem("fastexRoute");
-  alert(route ? "Τα στοιχεία της αποστολής αποθηκεύτηκαν προσωρινά. Επόμενο βήμα: κόστος + αριθμός αποστολής + Proofly." : "Κάνε πρώτα υπολογισμό.");
-});
+const SK='fastex_v2_shipments',CK='fastex_v2_customers';
+let shipments=JSON.parse(localStorage.getItem(SK)||'[]');
+let customers=JSON.parse(localStorage.getItem(CK)||'[]');
+const $=id=>document.getElementById(id);
+function save(){localStorage.setItem(SK,JSON.stringify(shipments));localStorage.setItem(CK,JSON.stringify(customers))}
+function esc(x){return String(x||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function euro(x){return Number(x||0).toLocaleString('el-GR',{minimumFractionDigits:2,maximumFractionDigits:2})+'€'}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));let n=$('nav-'+id);if(n)n.classList.add('active');render();scrollTo(0,0)}
+function calcPrice(){let km=Number($('km').value||0);if(!km)return alert('Βάλε πρώτα τα km.');let p=km<=2?4:km<=5?5:km<=8?6:km<=12?7:7+(km-12)*.55;$('price').value=p.toFixed(2)}
+$('form').addEventListener('submit',e=>{e.preventDefault();shipments.unshift({id:Date.now(),store:$('store').value.trim(),pickup:$('pickup').value.trim(),recipient:$('recipient').value.trim(),phone:$('phone').value.trim(),dropoff:$('dropoff').value.trim(),parcel:$('parcel').value.trim(),km:Number($('km').value||0),price:Number($('price').value||0),status:'Νέα',created:new Date().toISOString()});save();e.target.reset();alert('Η αποστολή αποθηκεύτηκε.');show('active')});
+function badge(s){return s==='Παραδόθηκε'?'green':s==='Σε διαδρομή'?'orange':''}
+function card(s,active){
+let next=s.status==='Νέα'?'Παραλήφθηκε':s.status==='Παραλήφθηκε'?'Σε διαδρομή':'Παράδοση';
+return `<div class="card ship"><div class="shiphead"><div><div class="title">${esc(s.store)}</div><div class="muted">${esc(s.recipient)}</div></div><span class="badge ${badge(s.status)}">${esc(s.status)}</span></div><hr><div class="note">📍 ${esc(s.pickup)} → ${esc(s.dropoff)}</div><div class="note" style="margin-top:6px">📏 ${s.km} km • 💶 ${euro(s.price)}</div>${s.parcel?`<div class="note">📦 ${esc(s.parcel)}</div>`:''}<div class="actions">${active&&s.status!=='Παραδόθηκε'?`<button class="btn light" onclick="nextStatus(${s.id})">${next}</button>`:''}<button class="btn light" onclick="maps('${encodeURIComponent(s.dropoff)}')">🗺️ Maps</button><button class="btn danger" onclick="delShip(${s.id})">Διαγραφή</button></div></div>`}
+function nextStatus(id){let s=shipments.find(x=>x.id===id);if(!s)return;s.status=s.status==='Νέα'?'Παραλήφθηκε':s.status==='Παραλήφθηκε'?'Σε διαδρομή':'Παραδόθηκε';save();render()}
+function delShip(id){if(confirm('Να διαγραφεί η αποστολή;')){shipments=shipments.filter(x=>x.id!==id);save();render()}}
+function maps(a){location.href='https://www.google.com/maps/search/?api=1&query='+a}
+function addCustomer(){let name=$('cname').value.trim();if(!name)return alert('Βάλε όνομα καταστήματος.');customers.push({name,phone:$('cphone').value.trim(),address:$('caddress').value.trim()});save();$('cname').value='';$('cphone').value='';$('caddress').value='';render()}
+function delCustomer(i){if(confirm('Να διαγραφεί ο πελάτης;')){customers.splice(i,1);save();render()}}
+function render(){
+let active=shipments.filter(s=>s.status!=='Παραδόθηκε');$('activeCount').textContent=active.length+' αποστολές';
+let today=new Date().toDateString(),td=shipments.filter(s=>new Date(s.created).toDateString()===today);$('todayJobs').textContent=td.length;$('todayRevenue').textContent=euro(td.reduce((a,s)=>a+Number(s.price||0),0));
+$('activeList').innerHTML=active.length?active.map(s=>card(s,true)).join(''):`<div class="card empty">Δεν υπάρχουν ενεργές αποστολές.</div>`;
+let q=($('search')?.value||'').toLowerCase(),hist=shipments.filter(s=>[s.store,s.recipient,s.pickup,s.dropoff,s.phone].join(' ').toLowerCase().includes(q));$('historyList').innerHTML=hist.length?hist.map(s=>card(s,false)).join(''):`<div class="card empty">Δεν υπάρχουν αποστολές.</div>`;
+$('customerList').innerHTML=customers.length?customers.map((c,i)=>`<div class="card"><b>${esc(c.name)}</b><div class="note">📞 ${esc(c.phone)}<br>📍 ${esc(c.address)}</div><button class="btn danger" style="margin-top:10px" onclick="delCustomer(${i})">Διαγραφή</button></div>`).join(''):`<div class="card empty">Δεν υπάρχουν αποθηκευμένοι πελάτες.</div>`;
+}
+render();
 </script>
 </body>
 </html>
