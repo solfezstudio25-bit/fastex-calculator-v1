@@ -1,4 +1,7 @@
-const CACHE='fastex-v3-pwa';
-self.addEventListener('install',e=>{self.skipWaiting()});
-self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim())});
-self.addEventListener('fetch',e=>{if(e.request.method==='GET'){e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)))}});
+const CACHE='fastex-pwa-v4';
+self.addEventListener('install', event => self.skipWaiting());
+self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
+  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+});
