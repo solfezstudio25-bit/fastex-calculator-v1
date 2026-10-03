@@ -20,6 +20,8 @@ label{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}input,texta
 .nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);z-index:10;padding-bottom:env(safe-area-inset-bottom)}.nav button{border:0;background:none;color:var(--muted);padding:9px 3px;font-size:11px}.nav button strong{display:block;font-size:18px}.nav button.active{color:var(--blue)}
 .empty{text-align:center;padding:25px;color:var(--muted)}hr{border:0;border-top:1px solid var(--line);margin:13px 0}
 @media(max-width:430px){.row{grid-template-columns:1fr}}
+.signature-wrap{border:1px solid #d1d5db;border-radius:12px;background:#fff;overflow:hidden}
+#signature{display:block;width:100%;height:180px;touch-action:none;background:#fff}
 </style>
 </head>
 <body>
@@ -64,6 +66,11 @@ label{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}input,texta
 </div>
 <div id="customerList"></div>
 </section>
+
+<section id="proof" class="screen">
+<button class="back" onclick="show('active')">← Πίσω</button><h2>Υπογραφή παραλήπτη</h2>
+<div id="proofCard" class="card"></div>
+</section>
 </main>
 
 <nav class="nav">
@@ -87,8 +94,14 @@ $('form').addEventListener('submit',e=>{e.preventDefault();shipments.unshift({id
 function badge(s){return s==='Παραδόθηκε'?'green':s==='Σε διαδρομή'?'orange':''}
 function card(s,active){
 let next=s.status==='Νέα'?'Παραλήφθηκε':s.status==='Παραλήφθηκε'?'Σε διαδρομή':'Παράδοση';
-return `<div class="card ship"><div class="shiphead"><div><div class="title">${esc(s.store)}</div><div class="muted">${esc(s.recipient)}</div></div><span class="badge ${badge(s.status)}">${esc(s.status)}</span></div><hr><div class="note">📍 ${esc(s.pickup)} → ${esc(s.dropoff)}</div><div class="note" style="margin-top:6px">📏 ${s.km} km • 💶 ${euro(s.price)}</div>${s.parcel?`<div class="note">📦 ${esc(s.parcel)}</div>`:''}<div class="actions">${active&&s.status!=='Παραδόθηκε'?`<button class="btn light" onclick="nextStatus(${s.id})">${next}</button>`:''}<button class="btn light" onclick="maps('${encodeURIComponent(s.dropoff)}')">🗺️ Maps</button><button class="btn danger" onclick="delShip(${s.id})">Διαγραφή</button></div></div>`}
-function nextStatus(id){let s=shipments.find(x=>x.id===id);if(!s)return;s.status=s.status==='Νέα'?'Παραλήφθηκε':s.status==='Παραλήφθηκε'?'Σε διαδρομή':'Παραδόθηκε';save();render()}
+return `<div class="card ship"><div class="shiphead"><div><div class="title">${esc(s.store)}</div><div class="muted">${esc(s.recipient)}</div></div><span class="badge ${badge(s.status)}">${esc(s.status)}</span></div><hr><div class="note">📍 ${esc(s.pickup)} → ${esc(s.dropoff)}</div><div class="note" style="margin-top:6px">📏 ${s.km} km • 💶 ${euro(s.price)}</div>${s.parcel?`<div class="note">📦 ${esc(s.parcel)}</div>`:''}<div class="actions">${active&&s.status!=='Παραδόθηκε'?`<button class="btn light" onclick="nextStatus(${s.id})">${next}</button>`:''}${s.status==='Παραδόθηκε'?`<button class="btn light" onclick="openProof(${s.id})">✍️ Υπογραφή</button>`:''}<button class="btn light" onclick="maps('${encodeURIComponent(s.dropoff)}')">🗺️ Maps</button><button class="btn danger" onclick="delShip(${s.id})">Διαγραφή</button></div></div>`}
+function nextStatus(id){let s=shipments.find(x=>x.id===id);if(!s)return;if(s.status==='Νέα')s.status='Παραλήφθηκε';else if(s.status==='Παραλήφθηκε')s.status='Σε διαδρομή';else{s.status='Παραδόθηκε';s.deliveredAt=new Date().toISOString();save();openProof(id);return}save();render()}
+function openCustomerMap(address){location.href='https://www.google.com/maps/search/?api=1&query='+address}
+let sigCanvas,sigCtx,drawing=false;
+function setupSignature(){sigCanvas=$('signature');if(!sigCanvas)return;const ratio=Math.max(window.devicePixelRatio||1,1),rect=sigCanvas.getBoundingClientRect();sigCanvas.width=rect.width*ratio;sigCanvas.height=180*ratio;sigCtx=sigCanvas.getContext('2d');sigCtx.scale(ratio,ratio);sigCtx.lineWidth=2.5;sigCtx.lineCap='round';sigCtx.strokeStyle='#111827';const point=e=>{const r=sigCanvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};sigCanvas.onpointerdown=e=>{e.preventDefault();drawing=true;const p=point(e);sigCtx.beginPath();sigCtx.moveTo(p.x,p.y)};sigCanvas.onpointermove=e=>{if(!drawing)return;e.preventDefault();const p=point(e);sigCtx.lineTo(p.x,p.y);sigCtx.stroke()};sigCanvas.onpointerup=()=>drawing=false;sigCanvas.onpointercancel=()=>drawing=false}
+function clearSignature(){if(sigCtx)sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height)}
+function openProof(id){const s=shipments.find(x=>x.id===id);if(!s)return;show('proof');$('proofCard').innerHTML=`<div><b>${esc(s.store)}</b><div class="note" style="margin:8px 0">👤 ${esc(s.recipient)}<br>📍 ${esc(s.dropoff)}<br>🕒 ${s.deliveredAt?new Date(s.deliveredAt).toLocaleString('el-GR'):'-'}</div><label>✍️ Υπογραφή παραλήπτη</label><div class="signature-wrap"><canvas id="signature"></canvas></div><div class="actions"><button class="btn light" onclick="clearSignature()">Καθαρισμός</button><button class="btn primary" onclick="saveSignature(${s.id})">Αποθήκευση</button></div></div>`;setTimeout(()=>{setupSignature();if(s.signature){const im=new Image();im.onload=()=>sigCtx.drawImage(im,0,0,sigCanvas.getBoundingClientRect().width,180);im.src=s.signature}},50)}
+function saveSignature(id){const s=shipments.find(x=>x.id===id);if(!s)return;s.signature=sigCanvas.toDataURL('image/png');save();alert('Η υπογραφή αποθηκεύτηκε.');render()}
 function delShip(id){if(confirm('Να διαγραφεί η αποστολή;')){shipments=shipments.filter(x=>x.id!==id);save();render()}}
 function maps(a){location.href='https://www.google.com/maps/search/?api=1&query='+a}
 function addCustomer(){let name=$('cname').value.trim();if(!name)return alert('Βάλε όνομα καταστήματος.');customers.push({name,phone:$('cphone').value.trim(),address:$('caddress').value.trim()});save();$('cname').value='';$('cphone').value='';$('caddress').value='';render()}
@@ -98,7 +111,7 @@ let active=shipments.filter(s=>s.status!=='Παραδόθηκε');$('activeCount
 let today=new Date().toDateString(),td=shipments.filter(s=>new Date(s.created).toDateString()===today);$('todayJobs').textContent=td.length;$('todayRevenue').textContent=euro(td.reduce((a,s)=>a+Number(s.price||0),0));
 $('activeList').innerHTML=active.length?active.map(s=>card(s,true)).join(''):`<div class="card empty">Δεν υπάρχουν ενεργές αποστολές.</div>`;
 let q=($('search')?.value||'').toLowerCase(),hist=shipments.filter(s=>[s.store,s.recipient,s.pickup,s.dropoff,s.phone].join(' ').toLowerCase().includes(q));$('historyList').innerHTML=hist.length?hist.map(s=>card(s,false)).join(''):`<div class="card empty">Δεν υπάρχουν αποστολές.</div>`;
-$('customerList').innerHTML=customers.length?customers.map((c,i)=>`<div class="card"><b>${esc(c.name)}</b><div class="note">📞 ${esc(c.phone)}<br>📍 ${esc(c.address)}</div><button class="btn danger" style="margin-top:10px" onclick="delCustomer(${i})">Διαγραφή</button></div>`).join(''):`<div class="card empty">Δεν υπάρχουν αποθηκευμένοι πελάτες.</div>`;
+$('customerList').innerHTML=customers.length?customers.map((c,i)=>`<div class="card"><b>${esc(c.name)}</b><div class="note">📞 ${esc(c.phone)}<br>📍 ${esc(c.address)}</div><div class="actions"><button class="btn light" onclick="openCustomerMap('${encodeURIComponent(c.address)}')">🗺️ Άνοιγμα στους Χάρτες</button><button class="btn danger" onclick="delCustomer(${i})">Διαγραφή</button></div></div>`).join(''):`<div class="card empty">Δεν υπάρχουν αποθηκευμένοι πελάτες.</div>`;
 }
 render();
 </script>
