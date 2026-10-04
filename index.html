@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
 <title>FASTEX V2</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#111827">
 <style>
 :root{--bg:#f3f4f6;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--dark:#111827;--blue:#2563eb;--green:#16a34a;--orange:#ea580c;--red:#dc2626}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
@@ -23,9 +25,6 @@ label{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}input,texta
 .signature-wrap{border:1px solid #d1d5db;border-radius:12px;background:#fff;overflow:hidden}
 #signature{display:block;width:100%;height:180px;touch-action:none;background:#fff}
 </style>
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
 </head>
 <body>
 <header><div class="brand">⚡ FASTEX</div><div class="sub">Express deliveries • V2</div></header>
@@ -73,6 +72,7 @@ label{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}input,texta
 <section id="proof" class="screen">
 <button class="back" onclick="show('active')">← Πίσω</button><h2>Υπογραφή παραλήπτη</h2>
 <div id="proofCard" class="card"></div>
+<canvas id="proofImage" style="display:none"></canvas>
 </section>
 </main>
 
@@ -97,7 +97,7 @@ $('form').addEventListener('submit',e=>{e.preventDefault();shipments.unshift({id
 function badge(s){return s==='Παραδόθηκε'?'green':s==='Σε διαδρομή'?'orange':''}
 function card(s,active){
 let next=s.status==='Νέα'?'Παραλήφθηκε':s.status==='Παραλήφθηκε'?'Σε διαδρομή':'Παράδοση';
-return `<div class="card ship"><div class="shiphead"><div><div class="title">${esc(s.store)}</div><div class="muted">${esc(s.recipient)}</div></div><span class="badge ${badge(s.status)}">${esc(s.status)}</span></div><hr><div class="note">📍 ${esc(s.pickup)} → ${esc(s.dropoff)}</div><div class="note" style="margin-top:6px">📏 ${s.km} km • 💶 ${euro(s.price)}</div>${s.parcel?`<div class="note">📦 ${esc(s.parcel)}</div>`:''}<div class="actions">${active&&s.status!=='Παραδόθηκε'?`<button class="btn light" onclick="nextStatus(${s.id})">${next}</button>`:''}${s.status==='Παραδόθηκε'?`<button class="btn light" onclick="openProof(${s.id})">✍️ Υπογραφή</button>`:''}<button class="btn light" onclick="maps('${encodeURIComponent(s.dropoff)}')">🗺️ Maps</button><button class="btn danger" onclick="delShip(${s.id})">Διαγραφή</button></div></div>`}
+return `<div class="card ship"><div class="shiphead"><div><div class="title">${esc(s.store)}</div><div class="muted">${esc(s.recipient)}</div></div><span class="badge ${badge(s.status)}">${esc(s.status)}</span></div><hr><div class="note">📍 ${esc(s.pickup)} → ${esc(s.dropoff)}</div><div class="note" style="margin-top:6px">📏 ${s.km} km • 💶 ${euro(s.price)}</div>${s.parcel?`<div class="note">📦 ${esc(s.parcel)}</div>`:''}<div class="actions">${active&&s.status!=='Παραδόθηκε'?`<button class="btn light" onclick="nextStatus(${s.id})">${next}</button>`:''}${s.status==='Παραδόθηκε'?`<button class="btn light" onclick="openProof(${s.id})">✍️ Υπογραφή</button><button class="btn primary" onclick="shareProof(${s.id})">📤 Απόδειξη / Αποστολή</button>`:''}<button class="btn light" onclick="maps('${encodeURIComponent(s.dropoff)}')">🗺️ Maps</button><button class="btn danger" onclick="delShip(${s.id})">Διαγραφή</button></div></div>`}
 function nextStatus(id){let s=shipments.find(x=>x.id===id);if(!s)return;if(s.status==='Νέα')s.status='Παραλήφθηκε';else if(s.status==='Παραλήφθηκε')s.status='Σε διαδρομή';else{s.status='Παραδόθηκε';s.deliveredAt=new Date().toISOString();save();openProof(id);return}save();render()}
 function openCustomerMap(address){location.href='https://www.google.com/maps/search/?api=1&query='+address}
 let sigCanvas,sigCtx,drawing=false;
@@ -105,6 +105,21 @@ function setupSignature(){sigCanvas=$('signature');if(!sigCanvas)return;const ra
 function clearSignature(){if(sigCtx)sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height)}
 function openProof(id){const s=shipments.find(x=>x.id===id);if(!s)return;show('proof');$('proofCard').innerHTML=`<div><b>${esc(s.store)}</b><div class="note" style="margin:8px 0">👤 ${esc(s.recipient)}<br>📍 ${esc(s.dropoff)}<br>🕒 ${s.deliveredAt?new Date(s.deliveredAt).toLocaleString('el-GR'):'-'}</div><label>✍️ Υπογραφή παραλήπτη</label><div class="signature-wrap"><canvas id="signature"></canvas></div><div class="actions"><button class="btn light" onclick="clearSignature()">Καθαρισμός</button><button class="btn primary" onclick="saveSignature(${s.id})">Αποθήκευση</button></div></div>`;setTimeout(()=>{setupSignature();if(s.signature){const im=new Image();im.onload=()=>sigCtx.drawImage(im,0,0,sigCanvas.getBoundingClientRect().width,180);im.src=s.signature}},50)}
 function saveSignature(id){const s=shipments.find(x=>x.id===id);if(!s)return;s.signature=sigCanvas.toDataURL('image/png');save();alert('Η υπογραφή αποθηκεύτηκε.');render()}
+async function shareProof(id){
+ const s=shipments.find(x=>x.id===id); if(!s)return;
+ if(!s.signature){alert('Πρώτα αποθήκευσε την υπογραφή του παραλήπτη.');openProof(id);return;}
+ const c=$('proofImage'),ctx=c.getContext('2d'); c.width=1000;c.height=900;
+ ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#111827';ctx.fillRect(0,0,c.width,115);
+ ctx.fillStyle='#fff';ctx.font='800 42px system-ui';ctx.fillText('⚡ FASTEX',45,70);ctx.font='700 28px system-ui';ctx.fillText('ΑΠΟΔΕΙΞΗ ΠΑΡΑΔΟΣΗΣ',45,100);
+ ctx.fillStyle='#111827';ctx.font='700 28px system-ui';let y=165;
+ const row=(label,val)=>{ctx.fillText(label,45,y);ctx.font='400 28px system-ui';ctx.fillText(String(val||'-'),300,y);ctx.font='700 28px system-ui';y+=55;};
+ row('Κατάστημα:',s.store);row('Παραλήπτης:',s.recipient);row('Τηλέφωνο:',s.phone);row('Διεύθυνση:',s.dropoff);row('Παραγγελία:',s.parcel);row('Χρέωση:',euro(s.price));
+ row('Παράδοση:',s.deliveredAt?new Date(s.deliveredAt).toLocaleString('el-GR'):'-');
+ ctx.font='700 28px system-ui';ctx.fillText('ΥΠΟΓΡΑΦΗ ΠΑΡΑΛΗΠΤΗ',45,595);ctx.strokeStyle='#d1d5db';ctx.strokeRect(45,620,910,190);
+ const im=new Image(); await new Promise(resolve=>{im.onload=resolve;im.src=s.signature});ctx.drawImage(im,55,630,890,170);
+ ctx.font='400 22px system-ui';ctx.fillStyle='#6b7280';ctx.fillText('Η παράδοση επιβεβαιώθηκε με υπογραφή παραλήπτη.',45,855);
+ c.toBlob(async blob=>{if(!blob)return;const file=new File([blob],`FASTEX-POD-${s.id}.jpg`,{type:'image/jpeg'});try{if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({title:'FASTEX Απόδειξη Παράδοσης',text:'Απόδειξη παράδοσης FASTEX',files:[file]});}else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);alert('Η εικόνα αποθηκεύτηκε. Μπορείς να τη στείλεις από Viber, WhatsApp ή email.');}}catch(e){}},'image/jpeg',0.92);
+}
 function delShip(id){if(confirm('Να διαγραφεί η αποστολή;')){shipments=shipments.filter(x=>x.id!==id);save();render()}}
 function maps(a){location.href='https://www.google.com/maps/search/?api=1&query='+a}
 function addCustomer(){let name=$('cname').value.trim();if(!name)return alert('Βάλε όνομα καταστήματος.');customers.push({name,phone:$('cphone').value.trim(),address:$('caddress').value.trim()});save();$('cname').value='';$('cphone').value='';$('caddress').value='';render()}
@@ -117,7 +132,6 @@ let q=($('search')?.value||'').toLowerCase(),hist=shipments.filter(s=>[s.store,s
 $('customerList').innerHTML=customers.length?customers.map((c,i)=>`<div class="card"><b>${esc(c.name)}</b><div class="note">📞 ${esc(c.phone)}<br>📍 ${esc(c.address)}</div><div class="actions"><button class="btn light" onclick="openCustomerMap('${encodeURIComponent(c.address)}')">🗺️ Άνοιγμα στους Χάρτες</button><button class="btn danger" onclick="delCustomer(${i})">Διαγραφή</button></div></div>`).join(''):`<div class="card empty">Δεν υπάρχουν αποθηκευμένοι πελάτες.</div>`;
 }
 render();
-
 if ('serviceWorker' in navigator) { window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{})); }
 </script>
 </body>
